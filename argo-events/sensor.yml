@@ -24,7 +24,7 @@ spec:
     serviceAccountName: operate-workflow-sa
   dependencies:
     - name: test-dep
-      eventSourceName: webhook
+      eventSourceName: github
       eventName: nodejs-welcome
   triggers:
     - template:
@@ -34,7 +34,7 @@ spec:
           source:
             git:
               url: "git@github.com:NithyaParavasthu/Argo.git"
-              cloneDirectory: "/git/argo"
+              cloneDirectory: "/git/Argo"
               sshKeyPath: "/secret/key"
               namespace: argo-events
               filePath: "argo-workflow/kaniko-workflow.yaml"
