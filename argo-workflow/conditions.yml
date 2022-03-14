@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: even-num
+  labels:
+    workflows.argoproj.io/test: "true"
+  annotations:
+    workflows.argoproj.io/version: '>= 3.1.0'
+spec:
+  entrypoint: main
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: selector
+            template: oparator
+          - name: Even
+            depends: selector
+            template: Even
+            when: "{{tasks.selector.outputs.result}} == Even"
+          - name: Odd
+            depends: selector
+            template: Odd
+            when: "{{tasks.selector.outputs.result}} == Odd"
+      outputs:
+        artifacts:
+          - name: result
+            fromExpression: "tasks['selector'].outputs.result == 'Even' ? tasks.Even.outputs.artifacts.result : tasks.Odd.outputs.artifacts.result"
+
+    - name: oparator
+      script:
+        image: python:alpine3.6
+        command: [ python ]
+        source: |
+          import random
+          print("Even" if random.randint(0,10) %2 == 0 else "Odd")
+
+    - name: Even
+      script:
+        image: python:alpine3.6
+        command: [ python ]
+        source: |
+          with open("result.txt", "w") as f:
+            f.write("it was Even")
+      outputs:
+        artifacts:
+          - name: result
+            path: /result.txt
+
+    - name: Odd
+      script:
+        image: python:alpine3.6
+        command: [ python ]
+        source: |
+          with open("result.txt", "w") as f:
+            f.write("it was Odd")
+      outputs:
+        artifacts:
+          - name: result
+            path: /result.txt

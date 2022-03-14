@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: frappe-nithya
+  labels:
+    workflows.argoproj.io/archive-strategy: "false"
+spec:
+  entrypoint: hello
+  serviceAccountName: argo
+  volumes:
+    - name: kaniko-secret
+      secret:
+        secretName: regcred
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+  templates:
+    - name: hello
+      dag:
+        tasks:
+          - name: build-container-image
+            templateRef:
+              name: container-image-with-path
+              template: build-kaniko-git
+              clusterScope: true
+            arguments:
+               parameters:
+                 - name: app_repo
+                   value: git://github.com/frappe/frappe_docker.git
+                 - name: path
+                   value: build/bench/Dockerfile  
+                 - name: container_image
+                   value: nithyap04/frappe
+                 - name: container_tag
+                   value: "1.1.0"
