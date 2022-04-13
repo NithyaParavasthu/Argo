@@ -1,0 +1,29 @@
+# More info on GitLab project hooks: https://docs.gitlab.com/ce/api/projects.html#add-project-hook
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: gitlab
+spec:
+  selector:
+    eventsource-name: gitlab
+  gitlab:
+    caratred:
+      projects:
+        - "ezydevops"
+      webhook:
+        endpoint: /caratred
+        port: "13000"
+        method: POST
+        url: http://url-that-is-reachable-from-GitLab
+      events:
+        - PushEvents
+        - TagPushEvents
+      accessToken:
+        key: token
+        name: gitlab-access
+      secretToken:
+        key: token
+        name: gitlab-secret
+      enableSSLVerification: false
+      gitlabBaseURL: https://gitlab.com
+      deleteHookOnFinish: true

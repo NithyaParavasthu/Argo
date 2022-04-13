@@ -1,0 +1,76 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: os-name
+  # labels:
+  #   workflows.argoproj.io/test: "true"
+  # annotations:
+  #   workflows.argoproj.io/version: '>= 3.1.0'
+spec:
+  entrypoint: main
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: OS
+            template: selector
+          - name: Debian
+            depends: OS
+            template: Debian
+            arguments:
+              parameters:
+              - name: image
+                value: "{{item.image}}"
+              - name: tag
+                value: "{{item.tag}}"
+            withItems:
+            - {image: 'ubuntu', tag: 'latest'}
+            - {image: 'amazonlinux', tag: 'latest'}
+            - {image: 'oraclelinux', tag: '8.5'}
+            when: "{{tasks.OS.outputs.result}} == Debian"
+          - name: Redhat
+            depends: OS
+            template: Redhat
+            arguments:
+              parameters:
+              - name: image
+                value: "{{item.image}}"
+              - name: tag
+                value: "{{item.tag}}"
+            withItems:
+            - {image: 'redhat/ubi8-minimal', tag: 'latest'}
+            - {image: 'centos', tag: 'latest'}
+            when: "{{tasks.OS.outputs.result}} == Redhat"
+      # outputs:
+      #   parameters:
+      #     - name: result
+      #       valueFrom:
+      #         expression: "tasks['OS'].outputs.result == 'Debian' ? tasks.Debian.outputs.result : tasks.Redhat.outputs.result"
+            
+    - name: selector
+      script:
+        image: python:alpine3.6
+        command: [ python ]
+        source: |
+          import random
+          print("Debian" if random.randint(0,1) == 0 else "Redhat")
+
+    - name: Debian
+      inputs: 
+        parameters:
+        - name: image
+        - name: tag
+      container:
+        image: "{{inputs.parameters.image}}:{{inputs.parameters.tag}}"
+        command: [cat]
+        args: [/etc/os-release]
+          
+    - name: Redhat
+      inputs: 
+        parameters:
+        - name: image
+        - name: tag
+      container:
+        image: "{{inputs.parameters.image}}:{{inputs.parameters.tag}}"
+        command: [cat]
+        args: [/etc/os-release]

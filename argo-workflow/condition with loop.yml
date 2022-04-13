@@ -14,48 +14,40 @@ spec:
         tasks:
           - name: selector
             template: oparator
-          - name: Even
+          - name: Mono
             depends: selector
-            template: Even
-            when: "{{tasks.selector.outputs.result}} == Even"
+            template: Mono
+            when: "{{tasks.selector.outputs.result}} == Mono"
           - name: Odd
             depends: selector
             template: Odd
             when: "{{tasks.selector.outputs.result}} == Odd"
       outputs:
-        artifacts:
+        parameters:
           - name: result
-            fromExpression: "tasks['selector'].outputs.result == 'Even' ? tasks.Even.outputs.artifacts.result : tasks.Odd.outputs.artifacts.result"
-
+            valueFrom:
+              expression: "tasks['selector'].outputs.result == 'Mono' ? tasks.Mono.outputs.result : tasks.Odd.outputs.result"
+            
     - name: oparator
       script:
         image: python:alpine3.6
         command: [ python ]
         source: |
           import random
-          print("Even" if random.randint(0,10) %2 == 0 else "Odd")
+          print("Mono" if random.randint(0,1) == 0 else "Odd")
 
-    - name: Even
+    - name: Mono
       script:
         image: python:alpine3.6
         command: [ python ]
         source: |
-          with open("result.txt", "w") as f:
-            f.write("it was Even")
+          food = ["water","coff","tea"]
+          for x in food:
+            print(x)
           
-      outputs:
-        artifacts:
-          - name: result
-            path: /result.txt
-
     - name: Odd
       script:
         image: python:alpine3.6
         command: [ python ]
         source: |
-          with open("result.txt", "w") as f:
-            f.write("it was Odd")
-      outputs:
-        artifacts:
-          - name: result
-            path: /result.txt
+          print("Odd")

@@ -1,0 +1,85 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: resturent
+  labels:
+    workflows.argoproj.io/test: "true"
+  annotations:
+    workflows.argoproj.io/version: '>= 3.1.0'
+spec:
+  entrypoint: main
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: Food
+            template: Menu
+
+          - name: Dishes
+            depends: Food
+            template: Dishes
+            arguments:
+              parameters:
+              - name: Dish
+                value: "{{item.Dish}}"
+              - name: price
+                value: "{{item.price}}"
+            withItems:
+            - {Dish: 'veg meal', price: '50'}
+            - {Dish: 'Non-veg meal', price: '80'}
+            - {Dish: 'curd', price: '10'}
+            - {Dish: 'shavarma', price: '10'}
+            when: "{{tasks.Food.outputs.result}} == Dishes"
+
+          - name: Drink
+            depends: Food
+            template: Drink
+            arguments:
+              parameters:
+              - name: drink
+                value: "{{item.drink}}"
+              - name: price
+                value: "{{item.price}}"
+            withItems:
+            - {drink: 'Pepsi', price: '10'}
+            - {drink: 'Thums Up', price: '10'}
+            - {drink: 'Coca cola', price: '10'}
+            - {drink: 'Sprite', price: '10'}
+            when: "{{tasks.Food.outputs.result}} == Drink"
+      # outputs:
+      #   parameters:
+      #     - name: result
+      #       valueFrom:
+      #         expression: "tasks['Food'].outputs.result == 'Dishes' ? tasks.Dishes.outputs.result : tasks.Drink.outputs.result"
+            
+    - name: Menu
+      script:
+        image: python:alpine3.6
+        command: [ python ]
+        source: |
+          import random
+          print("Dishes" if random.randint(0,1) == 0 else "Drink")
+
+    - name: Dishes
+      inputs: 
+        parameters:
+        - name: Dish
+        - name: price
+      script:
+        image: python:alpine3.6
+        command: [ python ]
+        source: |
+          for x in {{inputs.parameters.Dish}}:
+            print(x)
+
+    - name: Drink
+      inputs: 
+        parameters:
+        - name: drink
+        - name: price
+      script:
+        image: python:alpine3.6
+        command: [ python ]
+        source: |
+          for x in {{inputs.parameters.drink}}:
+            print(x)

@@ -3,10 +3,8 @@ kind: EventSource
 metadata:
   name: github
 spec:
-  service:
-    ports:
-      - port: 12000
-        targetPort: 12000
+  selector:
+    eventsource-name: github
   github:
     nodejs-welcome:
       repositories:
@@ -18,7 +16,7 @@ spec:
         endpoint: /nodejs-welcome
         port: "12000"
         method: POST
-        url: https://80e9-183-82-115-199.ngrok.io
+        url: http://8.tcp.ngrok.io:19986
       events:
         - "*"
       apiToken:
